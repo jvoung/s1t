@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "s1t",
+    srcs = ["s1t.go"],
+    importpath = "github.com/jvoung/s1t/cmd",
+    visibility = ["//visibility:private"],
+    deps = ["//:dimacs_parser"],
+)
+
+go_binary(
+    name = "cmd",
+    embed = [":s1t"],
+    visibility = ["//visibility:public"],
+)
