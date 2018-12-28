@@ -46,8 +46,7 @@ func TestSimpleSat(t *testing.T) {
 			desc: "Has empty clause (unsat)",
 			inputLines: []string{
 				"p cnf 1 2",
-				"1 0",
-				"0",
+				"1 0", "0",
 			},
 			expectedSolution: Solution{
 				IsSat:      false,
@@ -58,9 +57,7 @@ func TestSimpleSat(t *testing.T) {
 			desc: "Three unit clauses (sat)",
 			inputLines: []string{
 				"p cnf 3 3",
-				"1 0",
-				"-2 0",
-				"3 0",
+				"1 0", "-2 0", "3 0",
 			},
 			expectedSolution: Solution{
 				IsSat:      true,
@@ -71,9 +68,7 @@ func TestSimpleSat(t *testing.T) {
 			desc: "Three unit clauses (unsat)",
 			inputLines: []string{
 				"p cnf 2 3",
-				"1 0",
-				"-2 0",
-				"-1 0",
+				"1 0", "-2 0", "-1 0",
 			},
 			expectedSolution: Solution{
 				IsSat:      false,
@@ -84,9 +79,7 @@ func TestSimpleSat(t *testing.T) {
 			desc: "Pure unit propagate (sat)",
 			inputLines: []string{
 				"p cnf 3 3",
-				"1 -2 0",
-				"-2 0",
-				"-2 3 0",
+				"1 -2 0", "-2 0", "-2 3 0",
 			},
 			expectedSolution: Solution{
 				IsSat:      true,
@@ -113,9 +106,7 @@ func TestBacktrack(t *testing.T) {
 			inputLines: []string{
 				"p cnf 2 3",
 				// X1 => X2 and X2 => X1 (so X1 <==> X2)
-				"-1 2 0",
-				"-2 1 0",
-				"1 2 0",
+				"-1 2 0", "-2 1 0", "1 2 0",
 			},
 			expectedSolution: Solution{
 				IsSat:      true,
@@ -126,9 +117,7 @@ func TestBacktrack(t *testing.T) {
 			desc: "Two vars sat (0 0)",
 			inputLines: []string{
 				"p cnf 2 3",
-				"-1 2 0",
-				"-2 1 0",
-				"-2 -1 0",
+				"-1 2 0", "-2 1 0", "-2 -1 0",
 			},
 			expectedSolution: Solution{
 				IsSat:      true,
@@ -139,9 +128,7 @@ func TestBacktrack(t *testing.T) {
 			desc: "Two vars sat (0 1)",
 			inputLines: []string{
 				"p cnf 2 3",
-				"1 2 0",
-				"-1 -2 0",
-				"-1 2 0",
+				"1 2 0", "-1 -2 0", "-1 2 0",
 			},
 			expectedSolution: Solution{
 				IsSat:      true,
@@ -152,9 +139,7 @@ func TestBacktrack(t *testing.T) {
 			desc: "Two vars sat (1 0)",
 			inputLines: []string{
 				"p cnf 2 3",
-				"1 2 0",
-				"-1 -2 0",
-				"1 -2 0",
+				"1 2 0", "-1 -2 0", "1 -2 0",
 			},
 			expectedSolution: Solution{
 				IsSat:      true,

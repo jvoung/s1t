@@ -2,8 +2,7 @@
 
 ## Overview
 
-A simple SAT solver, written as an exercise to learn Go lang. Initially this will start with the
-basic DPLL algorithm, and enhance.
+A simple SAT solver, written for fun (learn more Go lang).
 
 ## Input
 
@@ -17,4 +16,4 @@ Over time, may extend this to non-CNF SAT formats.
 ## Naming (or, why s1t?)
 
 s1t is a silly and trivial abbreviation in the style of i18n, l10n, S12n.
-You can guess the missing letter. Sadly, it looks like "sit".
+You can guess the missing letter.

@@ -13,7 +13,7 @@ func Solve(problem Problem) Solution {
 		return unsat()
 	}
 	assignments := initialAssignments(problem.Spec.NumVariables)
-	watchedLiterals := pickWatchLiterals(clauses)
+	watchedLiterals := pickWatchedLiterals(clauses)
 	if !initialUnitPropagate(clauses, assignments, watchedLiterals) {
 		return unsat()
 	}
@@ -30,8 +30,8 @@ func searchSolution(clauses []Clause, assignments []int, wls watchedLiterals, de
 	}
 	assignedAtDepth := []VarNum{}
 	doRollbacks := func() {
-		for _, iv := range assignedAtDepth {
-			assignments[iv] = none
+		for _, v := range assignedAtDepth {
+			assignments[v] = none
 		}
 	}
 	if tryAssign(clauses, varNum, Positive(varNum), assignments, wls, &assignedAtDepth) {
@@ -179,7 +179,7 @@ func (wl *twoWatchedLiterals) replaceOne(l Literal, newL Literal) twoWatchedLite
 }
 
 // Need to initialize Watched Literals, two per clause if not unit clauses
-func pickWatchLiterals(clauses []Clause) watchedLiterals {
+func pickWatchedLiterals(clauses []Clause) watchedLiterals {
 	l2c := make(map[Literal][]ClauseNum)
 	c2l := make(map[ClauseNum]twoWatchedLiterals)
 	for i, clause := range clauses {
