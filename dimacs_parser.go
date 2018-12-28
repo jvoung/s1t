@@ -14,6 +14,7 @@ func ParseDimacs(in io.Reader) (Problem, error) {
 	var spec ProblemSpec
 	var clauses []Clause
 	prevClause := newClause()
+	prevLiterals := make(map[Literal]bool)
 	for s.Scan() {
 		line := s.Text()
 		if spec.Format == "" {
@@ -22,14 +23,14 @@ func ParseDimacs(in io.Reader) (Problem, error) {
 				return Problem{}, err
 			}
 		} else {
-			err := parseCnfClause(line, spec, &prevClause, &clauses)
+			err := parseCnfClause(line, spec, &prevClause, &clauses, &prevLiterals)
 			if err != nil {
 				return Problem{}, err
 			}
 		}
 	}
 	// 0 terminator is not required for the last clause, so just add if there.
-	if len(prevClause.Negatives) != 0 || len(prevClause.Positives) != 0 {
+	if !prevClause.Empty() {
 		clauses = append(clauses, prevClause)
 	}
 	if len(clauses) != spec.NumClauses {
@@ -80,8 +81,8 @@ func parseSpec(line string, spec *ProblemSpec) error {
 
 const clauseTerminatorNum = 0
 
-func parseCnfClause(line string, spec ProblemSpec,
-	prevClause *Clause, clauses *[]Clause) error {
+func parseCnfClause(line string, spec ProblemSpec, prevClause *Clause,
+	clauses *[]Clause, prevLiterals *map[Literal]bool) error {
 	fields := strings.Fields(line)
 	for _, f := range fields {
 		num, err := strconv.Atoi(f)
@@ -92,26 +93,34 @@ func parseCnfClause(line string, spec ProblemSpec,
 		if num == clauseTerminatorNum {
 			*clauses = append(*clauses, *prevClause)
 			*prevClause = newClause()
+			*prevLiterals = make(map[Literal]bool)
 			continue
 		}
 		if intAbs(num) > spec.NumVariables {
 			return fmt.Errorf("Variable number %d goes beyond pre-declared num vars %d",
 				intAbs(num), spec.NumVariables)
 		}
+		var literal Literal
+		// shift numbering back to 0
 		if num < 0 {
-			prevClause.Negatives[VarNum(-num)] = true
+			literal = Negative(VarNum(-num - 1))
 		} else {
-			prevClause.Positives[VarNum(num)] = true
-
+			literal = Positive(VarNum(num - 1))
 		}
+		_, hadLiteral := (*prevLiterals)[literal]
+		// We could also just ignore duplicate literals, and not add them to the slice.
+		if hadLiteral {
+			return fmt.Errorf("Duplicate literal %d in clause", num)
+		}
+		prevClause.Literals = append(prevClause.Literals, literal)
+		(*prevLiterals)[literal] = true
 	}
 	return nil
 }
 
 func newClause() Clause {
 	return Clause{
-		Positives: map[VarNum]bool{},
-		Negatives: map[VarNum]bool{},
+		Literals: []Literal{},
 	}
 }
 

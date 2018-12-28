@@ -110,14 +110,7 @@ func TestCnfClauses(t *testing.T) {
 				"1 -2 0",
 			},
 			expectedClauses: []Clause{
-				Clause{
-					Positives: map[VarNum]bool{
-						1: true,
-					},
-					Negatives: map[VarNum]bool{
-						2: true,
-					},
-				},
+				Clause{Literals: []Literal{Positive(0), Negative(1)}},
 			},
 		},
 		{
@@ -127,14 +120,7 @@ func TestCnfClauses(t *testing.T) {
 				"1 -2",
 			},
 			expectedClauses: []Clause{
-				Clause{
-					Positives: map[VarNum]bool{
-						1: true,
-					},
-					Negatives: map[VarNum]bool{
-						2: true,
-					},
-				},
+				Clause{Literals: []Literal{Positive(0), Negative(1)}},
 			},
 		},
 		{
@@ -146,29 +132,9 @@ func TestCnfClauses(t *testing.T) {
 				"-3",
 			},
 			expectedClauses: []Clause{
-				Clause{
-					Positives: map[VarNum]bool{
-						1: true,
-						3: true,
-					},
-					Negatives: map[VarNum]bool{
-						4: true,
-					},
-				},
-				Clause{
-					Positives: map[VarNum]bool{
-						4: true,
-					},
-					Negatives: map[VarNum]bool{},
-				},
-				Clause{
-					Positives: map[VarNum]bool{
-						2: true,
-					},
-					Negatives: map[VarNum]bool{
-						3: true,
-					},
-				},
+				Clause{Literals: []Literal{Positive(0), Positive(2), Negative(3)}},
+				Clause{Literals: []Literal{Positive(3)}},
+				Clause{Literals: []Literal{Positive(1), Negative(2)}},
 			},
 		},
 		{
@@ -183,29 +149,9 @@ func TestCnfClauses(t *testing.T) {
 				"0",
 			},
 			expectedClauses: []Clause{
-				Clause{
-					Positives: map[VarNum]bool{
-						1: true,
-						3: true,
-					},
-					Negatives: map[VarNum]bool{
-						4: true,
-					},
-				},
-				Clause{
-					Positives: map[VarNum]bool{
-						4: true,
-					},
-					Negatives: map[VarNum]bool{},
-				},
-				Clause{
-					Positives: map[VarNum]bool{
-						2: true,
-					},
-					Negatives: map[VarNum]bool{
-						3: true,
-					},
-				},
+				Clause{Literals: []Literal{Positive(0), Positive(2), Negative(3)}},
+				Clause{Literals: []Literal{Positive(3)}},
+				Clause{Literals: []Literal{Positive(1), Negative(2)}},
 			},
 		},
 	}
@@ -263,6 +209,15 @@ func TestCnfErrorCases(t *testing.T) {
 				"1 0",
 			},
 			expectedErrSubstring: "Expected 3 clauses, but got 2",
+		},
+		{
+			desc: "Duplicated literals in same clause",
+			lines: []string{
+				"p cnf 2 2",
+				"1 -2 2 -1 2 0",
+				"1 0",
+			},
+			expectedErrSubstring: "Duplicate literal 2 in clause",
 		},
 	}
 
