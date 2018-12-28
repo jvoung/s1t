@@ -6,10 +6,13 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"runtime/pprof"
 	"time"
 
 	"github.com/jvoung/s1t"
 )
+
+var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
 func main() {
 	startTime := time.Now()
@@ -32,6 +35,10 @@ func main() {
 			len(remaining))
 		os.Exit(1)
 	}
+	if *cpuprofile != "" {
+		enableCPUProfile(*cpuprofile)
+		defer pprof.StopCPUProfile()
+	}
 	problem, err := s1t.ParseDimacs(input)
 	if err != nil {
 		fmt.Printf("Error parsing input %v: %e\n", input, err)
@@ -45,4 +52,12 @@ func main() {
 	fmt.Printf("t %s %d %d %f\n",
 		problem.Spec.Format, problem.Spec.NumVariables, problem.Spec.NumVariables,
 		time.Since(startTime).Seconds())
+}
+
+func enableCPUProfile(cpuprofile string) {
+	f, err := os.Create(cpuprofile)
+	if err != nil {
+		panic(err)
+	}
+	pprof.StartCPUProfile(f)
 }
