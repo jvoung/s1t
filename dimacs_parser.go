@@ -108,12 +108,10 @@ func parseCnfClause(line string, spec ProblemSpec, prevClause *Clause,
 			literal = Positive(VarNum(num - 1))
 		}
 		_, hadLiteral := (*prevLiterals)[literal]
-		// We could also just ignore duplicate literals, and not add them to the slice.
-		if hadLiteral {
-			return fmt.Errorf("Duplicate literal %d in clause", num)
+		if !hadLiteral {
+			prevClause.Literals = append(prevClause.Literals, literal)
+			(*prevLiterals)[literal] = true
 		}
-		prevClause.Literals = append(prevClause.Literals, literal)
-		(*prevLiterals)[literal] = true
 	}
 	return nil
 }

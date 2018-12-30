@@ -154,6 +154,18 @@ func TestCnfClauses(t *testing.T) {
 				Clause{Literals: []Literal{Positive(1), Negative(2)}},
 			},
 		},
+		{
+			desc: "Duplicated literals in same clause",
+			inputLines: []string{
+				"p cnf 2 1",
+				"1 -2 2 -1 2 1 -1 -2 0",
+			},
+			expectedClauses: []Clause{
+				Clause{
+					Literals: []Literal{Positive(0), Negative(1), Positive(1), Negative(0)},
+				},
+			},
+		},
 	}
 	for _, c := range cases {
 		problem, err := ParseDimacs(strings.NewReader(
@@ -209,15 +221,6 @@ func TestCnfErrorCases(t *testing.T) {
 				"1 0",
 			},
 			expectedErrSubstring: "Expected 3 clauses, but got 2",
-		},
-		{
-			desc: "Duplicated literals in same clause",
-			lines: []string{
-				"p cnf 2 2",
-				"1 -2 2 -1 2 0",
-				"1 0",
-			},
-			expectedErrSubstring: "Duplicate literal 2 in clause",
 		},
 	}
 
