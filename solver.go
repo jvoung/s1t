@@ -45,7 +45,7 @@ func searchSolution(clauses []Clause, assignments []int, wls watchedLiterals, de
 	}
 	doRollbacks()
 
-	assignedAtDepth = assignedAtDepth[:]
+	assignedAtDepth = assignedAtDepth[:0]
 	if tryAssign(clauses, varNum, Negative(varNum), assignments, wls, &assignedAtDepth) {
 		if searchSolution(clauses, assignments, wls, depth+1, varNum) {
 			return true
