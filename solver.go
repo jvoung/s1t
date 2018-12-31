@@ -13,7 +13,7 @@ func Solve(problem Problem) Solution {
 		return unsat()
 	}
 	assignments := initialAssignments(problem.Spec.NumVariables)
-	watchedLiterals := pickWatchedLiterals(clauses)
+	watchedLiterals := pickWatchedLiterals(problem.Spec.NumVariables, clauses)
 	if !initialUnitPropagate(clauses, assignments, watchedLiterals) {
 		return unsat()
 	}
@@ -161,7 +161,7 @@ type twoWatchedLiterals struct {
 }
 
 type watchedLiterals struct {
-	literalToClause map[Literal][]ClauseNum
+	literalToClause [][]ClauseNum
 	clauseToLiteral []*twoWatchedLiterals
 }
 
@@ -181,8 +181,9 @@ func (wl *twoWatchedLiterals) replaceOne(l Literal, newL Literal) {
 }
 
 // Need to initialize Watched Literals, two per clause if not unit clauses
-func pickWatchedLiterals(clauses []Clause) watchedLiterals {
-	l2c := make(map[Literal][]ClauseNum)
+func pickWatchedLiterals(numVars int, clauses []Clause) watchedLiterals {
+	// take advantage of literals being (v*2) or (v*2+1), and use literal as slice indexes.
+	l2c := make([][]ClauseNum, numVars * 2)
 	c2l := make([]*twoWatchedLiterals, len(clauses))
 	for i, clause := range clauses {
 		cnum := ClauseNum(i)
