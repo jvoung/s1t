@@ -162,7 +162,7 @@ type twoWatchedLiterals struct {
 
 type watchedLiterals struct {
 	literalToClause map[Literal][]ClauseNum
-	clauseToLiteral map[ClauseNum]*twoWatchedLiterals
+	clauseToLiteral []*twoWatchedLiterals
 }
 
 func (wl *twoWatchedLiterals) otherWatched(l Literal) Literal {
@@ -183,7 +183,7 @@ func (wl *twoWatchedLiterals) replaceOne(l Literal, newL Literal) {
 // Need to initialize Watched Literals, two per clause if not unit clauses
 func pickWatchedLiterals(clauses []Clause) watchedLiterals {
 	l2c := make(map[Literal][]ClauseNum)
-	c2l := make(map[ClauseNum]*twoWatchedLiterals)
+	c2l := make([]*twoWatchedLiterals, len(clauses))
 	for i, clause := range clauses {
 		cnum := ClauseNum(i)
 		if len(clause.Literals) < 2 {
@@ -193,7 +193,7 @@ func pickWatchedLiterals(clauses []Clause) watchedLiterals {
 		l2 := clause.Literals[1]
 		l2c[l1] = append(l2c[l1], cnum)
 		l2c[l2] = append(l2c[l2], cnum)
-		c2l[cnum] = &twoWatchedLiterals{l1, l2}
+		c2l[i] = &twoWatchedLiterals{l1, l2}
 	}
 	return watchedLiterals{l2c, c2l}
 }
