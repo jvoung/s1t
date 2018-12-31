@@ -6,10 +6,6 @@ const (
 	none = -1
 )
 
-const (
-	unitPropStackCapacity = 32
-)
-
 // Solve determines if a given problem is unsat or sat (with an assignment).
 func Solve(problem Problem) Solution {
 	clauses := problem.Clauses
@@ -21,25 +17,27 @@ func Solve(problem Problem) Solution {
 	if !initialUnitPropagate(clauses, assignments, watchedLiterals) {
 		return unsat()
 	}
-	if searchSolution(clauses, assignments, watchedLiterals, 0, 0) {
+	assignedAtDepth := make([]VarNum, 0, problem.Spec.NumVariables)
+	if searchSolution(clauses, assignments, watchedLiterals, 0, 0, assignedAtDepth) {
 		return sat(assignments)
 	}
 	return unsat()
 }
 
-func searchSolution(clauses []Clause, assignments []int, wls watchedLiterals, depth int, searchFrom VarNum) bool {
+func searchSolution(clauses []Clause, assignments []int, wls watchedLiterals, depth int,
+	searchFrom VarNum, assignedAtDepth []VarNum) bool {
 	varNum, hasUnassigned := nextUnassignedVariable(assignments, int(searchFrom))
 	if !hasUnassigned {
 		return true
 	}
-	assignedAtDepth := make([]VarNum, 0, unitPropStackCapacity)
 	doRollbacks := func() {
 		for _, v := range assignedAtDepth {
 			assignments[v] = none
 		}
 	}
 	if tryAssign(clauses, varNum, Positive(varNum), assignments, wls, &assignedAtDepth) {
-		if searchSolution(clauses, assignments, wls, depth+1, varNum) {
+		if searchSolution(clauses, assignments, wls, depth+1,
+			varNum, assignedAtDepth[len(assignedAtDepth):]) {
 			return true
 		}
 	}
@@ -47,7 +45,8 @@ func searchSolution(clauses []Clause, assignments []int, wls watchedLiterals, de
 
 	assignedAtDepth = assignedAtDepth[:0]
 	if tryAssign(clauses, varNum, Negative(varNum), assignments, wls, &assignedAtDepth) {
-		if searchSolution(clauses, assignments, wls, depth+1, varNum) {
+		if searchSolution(clauses, assignments, wls, depth+1,
+			varNum, assignedAtDepth[len(assignedAtDepth):]) {
 			return true
 		}
 	}
@@ -210,7 +209,7 @@ func initialUnitPropagate(clauses []Clause, assignments []int,
 		if len(clause.Literals) == 1 {
 			l := clause.Literals[0]
 			v := l.Var()
-			assigned := make([]VarNum, 0, unitPropStackCapacity)
+			assigned := make([]VarNum, 0, len(assignments)/4)
 			if !tryAssign(clauses, v, l, assignments, watchedLiterals, &assigned) {
 				return false
 			}
