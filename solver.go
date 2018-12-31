@@ -6,6 +6,10 @@ const (
 	none = -1
 )
 
+const (
+	unitPropStackCapacity = 32
+)
+
 // Solve determines if a given problem is unsat or sat (with an assignment).
 func Solve(problem Problem) Solution {
 	clauses := problem.Clauses
@@ -28,7 +32,7 @@ func searchSolution(clauses []Clause, assignments []int, wls watchedLiterals, de
 	if !hasUnassigned {
 		return true
 	}
-	assignedAtDepth := []VarNum{}
+	assignedAtDepth := make([]VarNum, 0, unitPropStackCapacity)
 	doRollbacks := func() {
 		for _, v := range assignedAtDepth {
 			assignments[v] = none
@@ -41,7 +45,7 @@ func searchSolution(clauses []Clause, assignments []int, wls watchedLiterals, de
 	}
 	doRollbacks()
 
-	assignedAtDepth = []VarNum{}
+	assignedAtDepth = assignedAtDepth[:]
 	if tryAssign(clauses, varNum, Negative(varNum), assignments, wls, &assignedAtDepth) {
 		if searchSolution(clauses, assignments, wls, depth+1, varNum) {
 			return true
@@ -82,7 +86,8 @@ func tryAssign(clauses []Clause, v VarNum, l Literal,
 	for i := 0; i < len(affectedClauses); {
 		cnum := affectedClauses[i]
 		watchedForC := wls.clauseToLiteral[cnum]
-		newLit := findNewWatchedLiteral(clauses, assignments, watchedForC, cnum, negatedL)
+		otherWatchedLit := watchedForC.otherWatched(negatedL)
+		newLit := findNewWatchedLiteral(clauses, assignments, otherWatchedLit, cnum, negatedL)
 		if newLit == none {
 			// Only the other watched literal is available, in which case
 			// we'll violate the invariant and just keep the watch at the same spot.
@@ -91,7 +96,6 @@ func tryAssign(clauses []Clause, v VarNum, l Literal,
 			// - is true, the clause is already satisfied
 			// - is unassigned, then we've found a unit clause so attempt to
 			//   recursively do unit propagation
-			otherWatchedLit := watchedForC.otherWatched(negatedL)
 			otherWatchedV := otherWatchedLit.Var()
 			otherA := assignments[otherWatchedV]
 			if otherA == none {
@@ -119,13 +123,12 @@ func tryAssign(clauses []Clause, v VarNum, l Literal,
 }
 
 func findNewWatchedLiteral(
-	clauses []Clause, assignments []int, watchedForC *twoWatchedLiterals,
+	clauses []Clause, assignments []int, otherWatchedLit Literal,
 	cnum ClauseNum, negatedL Literal) Literal {
 	// Either:
 	// - find a new true literal
 	// - find a new unassigned literal
 	// - no literal that matches invariants -- should check other watched lit
-	otherWatchedLit := watchedForC.otherWatched(negatedL)
 	c := clauses[cnum]
 	for _, candidate := range c.Literals {
 		if candidate == negatedL {
@@ -183,7 +186,7 @@ func (wl *twoWatchedLiterals) replaceOne(l Literal, newL Literal) {
 // Need to initialize Watched Literals, two per clause if not unit clauses
 func pickWatchedLiterals(numVars int, clauses []Clause) watchedLiterals {
 	// take advantage of literals being (v*2) or (v*2+1), and use literal as slice indexes.
-	l2c := make([][]ClauseNum, numVars * 2)
+	l2c := make([][]ClauseNum, numVars*2)
 	c2l := make([]*twoWatchedLiterals, len(clauses))
 	for i, clause := range clauses {
 		cnum := ClauseNum(i)
@@ -207,7 +210,7 @@ func initialUnitPropagate(clauses []Clause, assignments []int,
 		if len(clause.Literals) == 1 {
 			l := clause.Literals[0]
 			v := l.Var()
-			assigned := []VarNum{}
+			assigned := make([]VarNum, 0, unitPropStackCapacity)
 			if !tryAssign(clauses, v, l, assignments, watchedLiterals, &assigned) {
 				return false
 			}
