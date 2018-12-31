@@ -10,10 +10,8 @@ import (
 )
 
 type solverTestCase struct {
-	desc       string
-	inputLines []string
-	// TODO(jvoung): maybe these should be the Solution.Output() string instead to more easily
-	// match other solver's outputs.
+	desc             string
+	inputLines       []string
 	expectedSolution Solution
 }
 
@@ -26,10 +24,7 @@ func TestSimpleSat(t *testing.T) {
 				"p cnf 1 1",
 				"1 0",
 			},
-			expectedSolution: Solution{
-				IsSat:      true,
-				Assignment: []int{1},
-			},
+			expectedSolution: sat([]int{1}),
 		},
 		{
 			desc: "One unit clause (sat neg)",
@@ -37,10 +32,7 @@ func TestSimpleSat(t *testing.T) {
 				"p cnf 1 1",
 				"-1 0",
 			},
-			expectedSolution: Solution{
-				IsSat:      true,
-				Assignment: []int{0},
-			},
+			expectedSolution: sat([]int{0}),
 		},
 		{
 			desc: "Has empty clause (unsat)",
@@ -48,10 +40,7 @@ func TestSimpleSat(t *testing.T) {
 				"p cnf 1 2",
 				"1 0", "0",
 			},
-			expectedSolution: Solution{
-				IsSat:      false,
-				Assignment: nil,
-			},
+			expectedSolution: unsat(),
 		},
 		{
 			desc: "Three unit clauses (sat)",
@@ -59,10 +48,7 @@ func TestSimpleSat(t *testing.T) {
 				"p cnf 3 3",
 				"1 0", "-2 0", "3 0",
 			},
-			expectedSolution: Solution{
-				IsSat:      true,
-				Assignment: []int{1, 0, 1},
-			},
+			expectedSolution: sat([]int{1, 0, 1}),
 		},
 		{
 			desc: "Three unit clauses (unsat)",
@@ -70,10 +56,7 @@ func TestSimpleSat(t *testing.T) {
 				"p cnf 2 3",
 				"1 0", "-2 0", "-1 0",
 			},
-			expectedSolution: Solution{
-				IsSat:      false,
-				Assignment: nil,
-			},
+			expectedSolution: unsat(),
 		},
 		{
 			desc: "Pure unit propagate (sat)",
@@ -81,10 +64,7 @@ func TestSimpleSat(t *testing.T) {
 				"p cnf 3 3",
 				"1 -2 0", "-2 0", "-2 3 0",
 			},
-			expectedSolution: Solution{
-				IsSat:      true,
-				Assignment: []int{1, 0, 1},
-			},
+			expectedSolution: sat([]int{1, 0, 1}),
 		},
 	}
 	for _, c := range cases {
@@ -108,10 +88,7 @@ func TestBacktrack(t *testing.T) {
 				// X1 => X2 and X2 => X1 (so X1 <==> X2)
 				"-1 2 0", "-2 1 0", "1 2 0",
 			},
-			expectedSolution: Solution{
-				IsSat:      true,
-				Assignment: []int{1, 1},
-			},
+			expectedSolution: sat([]int{1, 1}),
 		},
 		{
 			desc: "Two vars sat (0 0)",
@@ -119,10 +96,7 @@ func TestBacktrack(t *testing.T) {
 				"p cnf 2 3",
 				"-1 2 0", "-2 1 0", "-2 -1 0",
 			},
-			expectedSolution: Solution{
-				IsSat:      true,
-				Assignment: []int{0, 0},
-			},
+			expectedSolution: sat([]int{0, 0}),
 		},
 		{
 			desc: "Two vars sat (0 1)",
@@ -130,10 +104,7 @@ func TestBacktrack(t *testing.T) {
 				"p cnf 2 3",
 				"1 2 0", "-1 -2 0", "-1 2 0",
 			},
-			expectedSolution: Solution{
-				IsSat:      true,
-				Assignment: []int{0, 1},
-			},
+			expectedSolution: sat([]int{0, 1}),
 		},
 		{
 			desc: "Two vars sat (1 0)",
@@ -141,10 +112,7 @@ func TestBacktrack(t *testing.T) {
 				"p cnf 2 3",
 				"1 2 0", "-1 -2 0", "1 -2 0",
 			},
-			expectedSolution: Solution{
-				IsSat:      true,
-				Assignment: []int{1, 0},
-			},
+			expectedSolution: sat([]int{1, 0}),
 		},
 		{
 			desc: "2-towers sat",
@@ -163,10 +131,7 @@ func TestBacktrack(t *testing.T) {
 				"1 2 0",
 				"3 4 0",
 			},
-			expectedSolution: Solution{
-				IsSat:      true,
-				Assignment: []int{1, 0, 0, 1}, // {0, 1, 1, 0} also possible
-			},
+			expectedSolution: sat([]int{1, 0, 0, 1}), // {0, 1, 1, 0} also possible
 		},
 	}
 	for _, c := range cases {
@@ -182,30 +147,21 @@ func TestBacktrack(t *testing.T) {
 
 // Randomly generated subset sum problem from http://toughsat.appspot.com/
 func TestSubsetSum2(t *testing.T) {
-	expectedSolution := Solution{
-		IsSat:      true,
-		Assignment: []int{1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0},
-	}
+	expectedSolution := sat([]int{1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0})
 	testFromFile(t, "test_cnf/subsetsum2.cnf", expectedSolution)
 }
 
 func TestSubsetSum2b(t *testing.T) {
-	expectedSolution := Solution{
-		IsSat:      true,
-		Assignment: []int{0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0},
-	}
+	expectedSolution := sat([]int{0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0})
 	testFromFile(t, "test_cnf/subsetsum2b.cnf", expectedSolution)
 }
 
 func TestSubsetSum3(t *testing.T) {
-	expectedSolution := Solution{
-		IsSat: true,
-		Assignment: []int{
-			1, 1, 0, 1, 0, 1, 1, 0, 1, 1,
-			0, 1, 0, 1, 1, 0, 0, 0, 0, 1,
-			0, 0, 0, 1, 1, 1, 0, 0, 1, 0,
-			0, 0, 0},
-	}
+	expectedSolution := sat([]int{
+		1, 1, 0, 1, 0, 1, 1, 0, 1, 1,
+		0, 1, 0, 1, 1, 0, 0, 0, 0, 1,
+		0, 0, 0, 1, 1, 1, 0, 0, 1, 0,
+		0, 0, 0})
 	testFromFile(t, "test_cnf/subsetsum3.cnf", expectedSolution)
 }
 
@@ -215,65 +171,116 @@ func TestQueen3(t *testing.T) {
 }
 
 func Test4Queens(t *testing.T) {
-	expectedSolution := Solution{
-		IsSat: true,
-		// Other solutions possible too (e.g., reflections):
-		Assignment: []int{
-			0, 0, 1, 0,
-			1, 0, 0, 0,
-			0, 0, 0, 1,
-			0, 1, 0, 0},
-	}
-	expectedSolution2 := Solution{
-		IsSat: true,
-		Assignment: []int{
-			0, 1, 0, 0,
-			0, 0, 0, 1,
-			1, 0, 0, 0,
-			0, 0, 1, 0},
-	}
+	// Other solutions possible too (e.g., reflections):
+	expectedSolution := sat([]int{
+		0, 0, 1, 0,
+		1, 0, 0, 0,
+		0, 0, 0, 1,
+		0, 1, 0, 0})
+	expectedSolution2 := sat([]int{
+		0, 1, 0, 0,
+		0, 0, 0, 1,
+		1, 0, 0, 0,
+		0, 0, 1, 0})
 	testFromFile(t, "test_cnf/queen4.cnf", expectedSolution, expectedSolution2)
 }
 
-func TestPigeonHole6(t *testing.T) {
-	expectedSolution := unsat()
-	testFromFile(t, "test_cnf/hole6.cnf", expectedSolution)
+// Some tests from https://www.cs.ubc.ca/~hoos/SATLIB/benchm.html
+// which are known to run quickly for sanity testing.
+func TestMediumSat(t *testing.T) {
+	testFromFile(t, "test_cnf/hole6.cnf", unsat())
+	testFromFileSelfCheck(t, "test_cnf/blocksworld_anomaly.cnf")
+	testFromFileSelfCheck(t, "test_cnf/blocksworld_medium.cnf")
+	testFromFileSelfCheck(t, "test_cnf/RTI_k3_n100_m429_0.cnf")
+	testFromFileSelfCheck(t, "test_cnf/RTI_k3_n100_m429_499.cnf")
 }
 
-func testFromFile(t *testing.T, relativePath string, expectedSolutions ...Solution) {
-	input, err := os.Open(relativePath)
-	if err != nil {
-		t.Fatalf("Failed to open test file: %v", err)
+// Some benchmarks from https://www.cs.ubc.ca/~hoos/SATLIB/benchm.html
+// which currently run slowly.
+func BenchmarkPigeonHole(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		testFromFile(b, "test_cnf_slow/hole8.cnf", unsat())
+		testFromFile(b, "test_cnf_slow/hole9.cnf", unsat())
 	}
-	defer input.Close()
-	problem := parseOrDie(input, t)
-	t.Logf("Testing problem %v: %v\n", relativePath, problem)
-	solution := Solve(problem)
-	matched := false
-	for _, es := range expectedSolutions {
-		if equalSolution(solution, es) {
-			matched = true
-			break
+}
+
+func BenchmarkHanoi4(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		testFromFileSelfCheck(b, "test_cnf_slow/hanoi4.cnf")
+	}
+}
+func BenchmarkBMS_k3_n100_m429(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		testFromFileSelfCheck(b, "test_cnf_slow/BMS_k3_n100_m429_0.cnf")
+		testFromFileSelfCheck(b, "test_cnf_slow/BMS_k3_n100_m429_499.cnf")
+	}
+}
+
+func BenchmarkGraphColoring(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		testFromFileSelfCheck(b, "test_cnf_slow/flat175-1.cnf")
+		testFromFileSelfCheck(b, "test_cnf_slow/flat200-1.cnf")
+	}
+}
+func BenchmarkBlockworld(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		testFromFileSelfCheck(b, "test_cnf_slow/bw_large.a.cnf")
+		testFromFileSelfCheck(b, "test_cnf_slow/bw_large.b.cnf")
+	}
+}
+
+func testFromFile(tb testing.TB, relativePath string, expectedSolutions ...Solution) {
+	checker := func(tb testing.TB, problem Problem, solution Solution) {
+		matched := false
+		for _, es := range expectedSolutions {
+			if equalSolution(solution, es) {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			tb.Errorf("Case %q, none of the expected solutions match (%v |%d|). Got %v",
+				relativePath, expectedSolutions, len(expectedSolutions), solution)
 		}
 	}
-	if !matched {
-		t.Errorf("Case %q, none of the expected solutions match (%v -- %d). Instead got %v",
-			relativePath, expectedSolutions, len(expectedSolutions), solution)
+	testFromFileWithChecker(tb, relativePath, checker)
+}
+
+func testFromFileSelfCheck(tb testing.TB, relativePath string) {
+	checker := func(tb testing.TB, problem Problem, solution Solution) {
+		sat, failedClause := solution.Satisfies(problem)
+		if !sat {
+			tb.Errorf("Case %q, solution does not satisfy clause %v (sol=%v)",
+				relativePath, failedClause, solution)
+		}
 	}
+	testFromFileWithChecker(tb, relativePath, checker)
+}
+
+func testFromFileWithChecker(
+	tb testing.TB, relativePath string, checker func(testing.TB, Problem, Solution)) {
+	input, err := os.Open(relativePath)
+	if err != nil {
+		tb.Fatalf("Failed to open test file: %v", err)
+	}
+	defer input.Close()
+	problem := parseOrDie(input, tb)
+	solution := Solve(problem)
+	checker(tb, problem, solution)
 }
 
 func equalSolution(s1, s2 Solution) bool {
 	return cmp.Equal(s1, s2)
 }
 
-func inputToProblem(lines []string, t *testing.T) Problem {
-	return parseOrDie(strings.NewReader(strings.Join(lines, "\n")), t)
+func inputToProblem(lines []string, tb *testing.T) Problem {
+	return parseOrDie(strings.NewReader(strings.Join(lines, "\n")), tb)
 }
 
-func parseOrDie(in io.Reader, t *testing.T) Problem {
+func parseOrDie(in io.Reader, tb testing.TB) Problem {
 	problem, err := ParseDimacs(in)
 	if err != nil {
-		t.Fatalf("Failed to parse input: %v", err)
+		tb.Fatalf("Failed to parse input: %v", err)
 	}
 	return problem
 }

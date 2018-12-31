@@ -46,3 +46,26 @@ func (s *Solution) Output(problem Problem) string {
 	}
 	return b.String()
 }
+
+// Satisfies sanity checks if the solution satifies the problem, returning true if so.
+// Otherwise it returns false plus the first falsified clause.
+func (s *Solution) Satisfies(p Problem) (bool, *Clause) {
+	if !s.IsSat {
+		panic("Checking Satisfied() on an unsat solution")
+	}
+	for _, c := range p.Clauses {
+		c := c
+		clauseSatisfied := false
+		for _, l := range c.Literals {
+			v := l.Var()
+			if s.Assignment[v] == l.AsInt() {
+				clauseSatisfied = true
+				break
+			}
+		}
+		if !clauseSatisfied {
+			return false, &c
+		}
+	}
+	return true, nil
+}
