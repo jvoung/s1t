@@ -5,7 +5,7 @@ go_library(
     srcs = ["s1t.go"],
     importpath = "github.com/jvoung/s1t/cmd",
     visibility = ["//visibility:private"],
-    deps = ["//:dimacs_parser"],
+    deps = ["//:go_default_library"],
 )
 
 go_binary(

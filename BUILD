@@ -7,10 +7,12 @@ gazelle(
 )
 
 go_library(
-    name = "dimacs_parser",
+    name = "go_default_library",
     srcs = [
         "dimacs_parser.go",
         "problem_spec.go",
+        "solution.go",
+        "solver.go",
     ],
     importpath = "github.com/jvoung/s1t",
     visibility = ["//visibility:public"],
@@ -18,8 +20,14 @@ go_library(
 
 go_test(
     name = "go_default_test",
-    srcs = ["dimacs_parser_test.go"],
+    srcs = [
+        "dimacs_parser_test.go",
+        "solver_test.go",
+    ],
+    data = glob([
+        "test_cnf/*",
+        "test_cnf_slow/*",
+    ]),
     embed = [":go_default_library"],
-    # TODO(jvoung): fix this dependency.
     deps = ["@com_github_google_go_cmp//cmp:go_default_library"],
 )
