@@ -81,8 +81,8 @@ func tryAssign(clauses []Clause, v VarNum, l Literal,
 	affectedClauses := wls.literalToClause[negatedL]
 	for i := 0; i < len(affectedClauses); {
 		cnum := affectedClauses[i]
-		newLit := findNewWatchedLiteral(clauses, assignments, wls, cnum, negatedL)
 		watchedForC := wls.clauseToLiteral[cnum]
+		newLit := findNewWatchedLiteral(clauses, assignments, watchedForC, cnum, negatedL)
 		if newLit == none {
 			// Only the other watched literal is available, in which case
 			// we'll violate the invariant and just keep the watch at the same spot.
@@ -112,18 +112,19 @@ func tryAssign(clauses []Clause, v VarNum, l Literal,
 			wls.literalToClause[negatedL] = affectedClauses
 
 			wls.literalToClause[newLit] = append(wls.literalToClause[newLit], cnum)
-			wls.clauseToLiteral[cnum] = watchedForC.replaceOne(negatedL, newLit)
+			watchedForC.replaceOne(negatedL, newLit)
 		}
 	}
 	return true
 }
 
-func findNewWatchedLiteral(clauses []Clause, assignments []int, wls watchedLiterals, cnum ClauseNum, negatedL Literal) Literal {
+func findNewWatchedLiteral(
+	clauses []Clause, assignments []int, watchedForC *twoWatchedLiterals,
+	cnum ClauseNum, negatedL Literal) Literal {
 	// Either:
 	// - find a new true literal
 	// - find a new unassigned literal
 	// - no literal that matches invariants -- should check other watched lit
-	watchedForC := wls.clauseToLiteral[cnum]
 	otherWatchedLit := watchedForC.otherWatched(negatedL)
 	c := clauses[cnum]
 	for _, candidate := range c.Literals {
@@ -161,7 +162,7 @@ type twoWatchedLiterals struct {
 
 type watchedLiterals struct {
 	literalToClause map[Literal][]ClauseNum
-	clauseToLiteral map[ClauseNum]twoWatchedLiterals
+	clauseToLiteral map[ClauseNum]*twoWatchedLiterals
 }
 
 func (wl *twoWatchedLiterals) otherWatched(l Literal) Literal {
@@ -171,17 +172,18 @@ func (wl *twoWatchedLiterals) otherWatched(l Literal) Literal {
 	return wl.first
 }
 
-func (wl *twoWatchedLiterals) replaceOne(l Literal, newL Literal) twoWatchedLiterals {
+func (wl *twoWatchedLiterals) replaceOne(l Literal, newL Literal) {
 	if l == wl.first {
-		return twoWatchedLiterals{newL, wl.second}
+		wl.first = newL
+	} else {
+		wl.second = newL
 	}
-	return twoWatchedLiterals{wl.first, newL}
 }
 
 // Need to initialize Watched Literals, two per clause if not unit clauses
 func pickWatchedLiterals(clauses []Clause) watchedLiterals {
 	l2c := make(map[Literal][]ClauseNum)
-	c2l := make(map[ClauseNum]twoWatchedLiterals)
+	c2l := make(map[ClauseNum]*twoWatchedLiterals)
 	for i, clause := range clauses {
 		cnum := ClauseNum(i)
 		if len(clause.Literals) < 2 {
@@ -191,7 +193,7 @@ func pickWatchedLiterals(clauses []Clause) watchedLiterals {
 		l2 := clause.Literals[1]
 		l2c[l1] = append(l2c[l1], cnum)
 		l2c[l2] = append(l2c[l2], cnum)
-		c2l[cnum] = twoWatchedLiterals{l1, l2}
+		c2l[cnum] = &twoWatchedLiterals{l1, l2}
 	}
 	return watchedLiterals{l2c, c2l}
 }
