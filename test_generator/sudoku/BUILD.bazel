@@ -1,14 +1,22 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
 
 go_library(
     name = "go_default_library",
     srcs = ["sudoku.go"],
     importpath = "github.com/jvoung/s1t/test_generator/sudoku",
     visibility = ["//visibility:private"],
+    deps = ["//:go_default_library"],
 )
 
 go_binary(
     name = "sudoku",
     embed = [":go_default_library"],
     visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["sudoku_test.go"],
+    data = glob(["test_data/*"]),
+    embed = [":go_default_library"],
 )
