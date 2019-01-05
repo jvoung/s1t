@@ -47,20 +47,7 @@ func main() {
 		PrintBoard(board, "", os.Stdout)
 	} else if *endToEnd {
 		startTime := time.Now()
-		board := ParseBoard(input)
-		fmt.Println("Solving board:")
-		PrintBoard(board, "", os.Stdout)
-		buf := strings.Builder{}
-		WriteCNF(board, &buf)
-		problem, err := s1t.ParseDimacs(strings.NewReader(buf.String()))
-		if err != nil {
-			panic(err)
-		}
-		solution := s1t.Solve(problem)
-		solutionStr := solution.Output(problem)
-		solvedBoard := ParseAssignments(strings.NewReader(solutionStr))
-		fmt.Println("and got:")
-		PrintBoard(solvedBoard, "", os.Stdout)
+		solveEndToEnd(input)
 		fmt.Printf("Solved in %f\n", time.Since(startTime).Seconds())
 	} else {
 		flag.Usage()
@@ -69,6 +56,28 @@ func main() {
 
 // Board holds the board values. 0 means blank, otherwise 1-9 are set.
 type Board [][]int
+
+func solveEndToEnd(input io.Reader) {
+	board := ParseBoard(input)
+	fmt.Println("Solving board:")
+	PrintBoard(board, "", os.Stdout)
+	fmt.Println("and got:")
+	solvedBoard := solveBoard(board)
+	PrintBoard(solvedBoard, "", os.Stdout)
+}
+
+func solveBoard(board Board) Board {
+	buf := strings.Builder{}
+	WriteCNF(board, &buf)
+	problem, err := s1t.ParseDimacs(strings.NewReader(buf.String()))
+	if err != nil {
+		panic(err)
+	}
+	solution := s1t.Solve(problem)
+	solutionStr := solution.Output(problem)
+	solvedBoard := ParseAssignments(strings.NewReader(solutionStr))
+	return solvedBoard
+}
 
 // ParseBoard parses a board givee format like in: http://norvig.com/sudoku.html
 func ParseBoard(input io.Reader) Board {
